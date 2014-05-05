@@ -35,7 +35,7 @@ AT := @
 ECHO := @echo
 endif
 
-ifneq ($(ARM_TOOLKIT_ROOT),)
+ifdef ARM_TOOLKIT_ROOT
 BINPATH=$(ARM_TOOLKIT_ROOT)/bin/
 else
 BINPATH=""
@@ -119,7 +119,7 @@ LDFLAGS += -T./stm32_flash.ld
 all:
 	@echo "Valid targets are"
 	@echo " clean : clean build directory"
-	@echo " lxr   : build LXR cortex firmware"
+	@echo " cortex: build LXR cortex firmware"
 
 
 .PHONY: clean
