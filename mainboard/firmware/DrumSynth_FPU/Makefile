@@ -120,8 +120,6 @@ all:
 	@echo "Valid targets are"
 	@echo " clean : clean build directory"
 	@echo " lxr   : build LXR cortex firmware"
-	@echo "BINPATH='$(BINPATH)'"
-	@echo "CC='$(CC)'"
 
 
 .PHONY: clean
