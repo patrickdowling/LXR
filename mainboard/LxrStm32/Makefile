@@ -13,6 +13,7 @@
 # OPTIONS
 
 BINARY?=LxrStm32.bin
+LXRSTM32_FIRMWARE_ADDR?=0x08004000
 
 ifeq ($(DEBUG),1)
 DEFINES += -DDEBUG
@@ -47,6 +48,7 @@ LD  =$(addprefix $(BINPATH),arm-none-eabi-ld)
 CP  =$(addprefix $(BINPATH),arm-none-eabi-objcopy)
 OD  =$(addprefix $(BINPATH),arm-none-eabi-objdump)
 AS  =$(addprefix $(BINPATH),arm-none-eabi-as)
+STFLASH ?= st-flash
 
 ###############################################################################
 # SOURCE FILES
@@ -123,6 +125,7 @@ all:
 	@echo "Valid targets are"
 	@echo " clean : clean build directory"
 	@echo " stm32: build LXR STM32 firmware"
+	@echo " flash: build LXR STM32 firmware and flash using st-flash"
 
 
 .PHONY: clean
@@ -153,6 +156,11 @@ printfiles:
 
 .PHONY: stm32
 stm32: $(BINARY)
+
+.PHONY: flash
+flash: $(BINARY)
+	$(ECHO) "Flashing $(BINARY) at $(LXRSTM32_FIRMWARE_ADDR)..."
+	$(AT)$(STFLASH) write $(BINARY) $(LXRSTM32_FIRMWARE_ADDR)
 
 $(ELF): $(OBJFILES)
 	$(ECHO) "Linking $@..."
