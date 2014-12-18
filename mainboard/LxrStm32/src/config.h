@@ -70,8 +70,6 @@
 #define PITCH_AMOUNT_FACTOR 32
 
 
-#define USE_DAC2	1	/**< 1: use 2nd DAC 4344 - 0: use ADC 5343*/
-
 #define USE_SD_CARD 1 //used by the user sample memory
 
 //wether to interpolate the oscillator wavetables or not

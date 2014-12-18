@@ -90,7 +90,6 @@ extern volatile int16_t dma_buffer2[OUTPUT_DMA_SIZE*4]; 	// *4 because we need 1
 #define CODEC_DAC1_I2S_WS_GPIO              GPIOA
 
 
-#if USE_DAC2
 //DAC2 config defines
 /* I2S3 peripheral configuration defines */
 #define CODEC_DAC2_I2S                  SPI2
@@ -126,42 +125,6 @@ extern volatile int16_t dma_buffer2[OUTPUT_DMA_SIZE*4]; 	// *4 because we need 1
 #define CODEC_I2S2_DMA_FLAG_TE          		DMA_FLAG_TEIF4
 #define CODEC_I2S2_DMA_FLAG_DME         		DMA_FLAG_DMEIF4
 
-
-
-#else
-//ADC config Defines
-#define CODEC_ADC_I2S                  SPI2
-#define CODEC_ADC_I2S_CLK              RCC_APB1Periph_SPI2
-#define CODEC_ADC_I2S_ADDRESS          0x4000380C	//SPI2_DR (reference manual: 0x4000 3800 - 0x4000 3BFF SPI2 / I2S2
-#define CODEC_ADC_I2S_GPIO_AF          GPIO_AF_SPI2
-#define CODEC_ADC_I2S_IRQ              SPI2_IRQn
-#define CODEC_ADC_I2S_GPIO_CLOCK       (RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOC)
-
-#define CODEC_ADC_I2S_SCK_PIN 		   GPIO_Pin_13 //port b
-#define CODEC_ADC_I2S_SD_PIN		   GPIO_Pin_15 //port b
-#define CODEC_ADC_I2S_WS_PIN           GPIO_Pin_12 //Port b
-#define CODEC_ADC_I2S_MCK_PIN          GPIO_Pin_6  //port c
-
-#define CODEC_ADC_I2S_SCK_PINSRC       GPIO_PinSource13
-#define CODEC_ADC_I2S_SD_PINSRC        GPIO_PinSource15
-#define CODEC_ADC_I2S_WS_PINSRC        GPIO_PinSource12
-#define CODEC_ADC_I2S_MCK_PINSRC       GPIO_PinSource6
-
-#define CODEC_ADC_I2S_GPIO             GPIOB
-#define CODEC_ADC_I2S_MCK_GPIO         GPIOC
-
-/* I2S2 DMA Stream definitions */
-#define CODEC_I2S2_DMA_CLOCK            		RCC_AHB1Periph_DMA1
-#define CODEC_I2S2_DMA_STREAM           		DMA1_Stream3
-#define CODEC_I2S2_DMA_DREG             		CODEC_ADC_I2S_ADDRESS
-#define CODEC_I2S2_DMA_CHANNEL          		DMA_Channel_0
-#define CODEC_I2S2_DMA_IRQ              		DMA1_Stream3_IRQn
-#define CODEC_I2S2_DMA_FLAG_TC          		DMA_FLAG_TCIF3
-#define CODEC_I2S2_DMA_FLAG_HT          		DMA_FLAG_HTIF3
-#define CODEC_I2S2_DMA_FLAG_FE          		DMA_FLAG_FEIF3
-#define CODEC_I2S2_DMA_FLAG_TE          		DMA_FLAG_TEIF3
-#define CODEC_I2S2_DMA_FLAG_DME         		DMA_FLAG_DMEIF3
-#endif
 
 
 void codec_initCsCodec(uint32_t Addr1, uint32_t Size1,uint32_t Addr2, uint32_t Size2);
