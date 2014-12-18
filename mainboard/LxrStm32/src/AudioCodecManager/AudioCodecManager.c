@@ -36,16 +36,16 @@
 #include <string.h>
 #include "datatypes.h"
 //------------------------------------------------------------------
-volatile int16_t dma_buffer[OUTPUT_DMA_SIZE*4];
-volatile int16_t dma_buffer2[OUTPUT_DMA_SIZE*4];
+volatile int16_t dma_buffer_dac1[DMA_BUFFER_SIZE];
+volatile int16_t dma_buffer_dac2[DMA_BUFFER_SIZE];
 
 uint8_t bCurrentSampleValid = 0;
 
 //------------------------------------------------------------------
 int CodecInit()
 {
-    dma_buffer[0] = 32756;
-    codec_initCsCodec((uint32_t)dma_buffer, OUTPUT_DMA_SIZE*2,(uint32_t)dma_buffer2, OUTPUT_DMA_SIZE*2);
+    dma_buffer_dac1[0] = 32756;
+    codec_initCsCodec((uint32_t)dma_buffer_dac1, OUTPUT_DMA_SIZE*2,(uint32_t)dma_buffer_dac2, OUTPUT_DMA_SIZE*2);
     return 0;
 }
 //------------------------------------------------------------------

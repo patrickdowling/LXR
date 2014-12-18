@@ -39,8 +39,10 @@
 #include "stm32f4xx.h"
 #include "config.h"
 
-extern volatile int16_t dma_buffer[OUTPUT_DMA_SIZE*4]; 		// *4 because we need 16 stereo samples = *2
-extern volatile int16_t dma_buffer2[OUTPUT_DMA_SIZE*4]; 	// *4 because we need 16 stereo samples = *2
+#define DMA_BUFFER_SIZE (OUTPUT_DMA_SIZE*2*2)			// *4 because we need 16 stereo samples = *2
+
+extern volatile int16_t dma_buffer_dac1[DMA_BUFFER_SIZE];
+extern volatile int16_t dma_buffer_dac2[DMA_BUFFER_SIZE];
 
 /* Mask for the bit EN of the I2S CFGR register */
 #define I2S_ENABLE_MASK                	 	0x0400

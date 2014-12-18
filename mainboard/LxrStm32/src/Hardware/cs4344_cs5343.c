@@ -61,7 +61,7 @@ void DMA1_Stream7_IRQHandler(void)
 	   DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_TCIF7);
 
 	   /* Re-Configure the buffer address and size */
-	   DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) &dma_buffer[(OUTPUT_DMA_SIZE*2)*(dmaPtr&0x1)];
+	   DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) &dma_buffer_dac1[(OUTPUT_DMA_SIZE*2)*(dmaPtr&0x1)];
 	   DMA_InitStructure.DMA_BufferSize = OUTPUT_DMA_SIZE*2;
 
 	   /* Configure the DMA Stream with the new parameters */
@@ -247,7 +247,7 @@ void DMA1_Stream4_IRQHandler(void)
 		   DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TC);
 
 		   /* Re-Configure the buffer address and size */
-		   DMA_InitStructure2.DMA_Memory0BaseAddr = (uint32_t) &dma_buffer2[(OUTPUT_DMA_SIZE*2)*(dmaPtr2&0x1)];
+		   DMA_InitStructure2.DMA_Memory0BaseAddr = (uint32_t) &dma_buffer_dac2[(OUTPUT_DMA_SIZE*2)*(dmaPtr2&0x1)];
 		   DMA_InitStructure2.DMA_BufferSize = OUTPUT_DMA_SIZE*2;
 
 		   /* Configure the DMA Stream with the new parameters */

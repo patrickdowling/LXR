@@ -179,7 +179,8 @@ void initAudioJackDiscoverPins()
 //---------------------------------------------------------
 inline void calcNextSampleBlock()
 {
-	mixer_calcNextSampleBlock((int16_t*)&dma_buffer[bCurrentSampleValid*(OUTPUT_DMA_SIZE*2)],(int16_t*)&dma_buffer2[bCurrentSampleValid*(OUTPUT_DMA_SIZE*2)]);
+	// DAC1 -> st2, DAC2 -> st1
+	mixer_calcNextSampleBlock((int16_t*)&dma_buffer_dac1[bCurrentSampleValid*(OUTPUT_DMA_SIZE*2)],(int16_t*)&dma_buffer_dac2[bCurrentSampleValid*(OUTPUT_DMA_SIZE*2)]);
 	bCurrentSampleValid = SAMPLE_VALID;
 }
 //---------------------------------------------------------
