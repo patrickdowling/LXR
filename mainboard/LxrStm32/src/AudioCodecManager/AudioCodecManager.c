@@ -42,7 +42,7 @@ volatile int16_t dma_buffer2[OUTPUT_DMA_SIZE*4];
 #endif
 
 uint8_t bCurrentSampleValid = 0;
-int16_t audioOutBuffer[2];
+
 //------------------------------------------------------------------
 int CodecInit()
 {
