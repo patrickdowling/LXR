@@ -52,6 +52,7 @@
 
 #define OUTPUT_DMA_SIZE 32
 #define DMA_MASK ((OUTPUT_DMA_SIZE*2)-1)
+
 #define UNIT_GAIN_DRIVE 0
 #define SET_PARAM_ARRAY_IN_PARSER 1
 #define USE_FILTER_DRIVE 0
@@ -88,10 +89,6 @@
 
 //the number of drum voices (bd tom1 tom2)
 #define NUM_VOICES 3
-
-#if DMA_MODE_ACTIVE
-#define OUTPUT_DMA_SIZE 16
-#endif
 
 //typedef  uint8_t bool;
 

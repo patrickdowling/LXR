@@ -40,7 +40,6 @@
 #include "globals.h"
 #include "cs4344_cs5343.h"
 
-#define DMA_MODE_ACTIVE 1
 //-----------------------------------
 int CodecInit();
 

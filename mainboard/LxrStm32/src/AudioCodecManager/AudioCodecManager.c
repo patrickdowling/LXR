@@ -36,10 +36,8 @@
 #include <string.h>
 #include "datatypes.h"
 //------------------------------------------------------------------
-#if DMA_MODE_ACTIVE
 volatile int16_t dma_buffer[OUTPUT_DMA_SIZE*4];
 volatile int16_t dma_buffer2[OUTPUT_DMA_SIZE*4];
-#endif
 
 uint8_t bCurrentSampleValid = 0;
 
