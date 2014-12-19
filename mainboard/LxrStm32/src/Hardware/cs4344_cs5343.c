@@ -40,6 +40,9 @@ DMA_InitTypeDef DMA_InitStructure;
 DMA_InitTypeDef DMA_InitStructure2;
 
 #define IRQ_HANDLE_FIFO_ERROR_FLAGS 1
+#ifdef DEBUG
+uint32_t debug_dma_buffer_underruns = 0;
+#endif
 
 /*
 Using circular DMA, the hardware continuously loops over the specified buffer.
@@ -57,6 +60,12 @@ stream.
 //################################ DAC 1 ############################################################
 void DMA1_Stream7_IRQHandler(void)
 {
+#ifdef DEBUG
+	/* If the buffer wasn't updated by now, this would seem to indicate an underrun... */
+	if ( SAMPLE_VALID != bCurrentSampleValid )
+		++debug_dma_buffer_underruns;
+#endif
+
 	/* Transfer complete interrupt */
 	if (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_TCIF7) != RESET)
 	{
