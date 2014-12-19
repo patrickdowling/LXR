@@ -45,7 +45,7 @@ uint8_t bCurrentSampleValid = 0;
 int CodecInit()
 {
     dma_buffer_dac1[0] = 32756;
-    codec_initCsCodec((uint32_t)dma_buffer_dac1, OUTPUT_DMA_SIZE*2,(uint32_t)dma_buffer_dac2, OUTPUT_DMA_SIZE*2);
+    codec_initCsCodec((uint32_t)dma_buffer_dac1, DMA_BUFFER_SIZE, (uint32_t)dma_buffer_dac2, DMA_BUFFER_SIZE);
     return 0;
 }
 //------------------------------------------------------------------

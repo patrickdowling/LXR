@@ -39,63 +39,49 @@
 DMA_InitTypeDef DMA_InitStructure;
 DMA_InitTypeDef DMA_InitStructure2;
 
+#define IRQ_HANDLE_FIFO_ERROR_FLAGS 1
 
-uint8_t dmaPtr=0;
-uint8_t dmaPtr2=0;
+/*
+Using circular DMA, the hardware continuously loops over the specified buffer.
+Using the Transfer Complete and Half Transfer interrupts, we can write into the
+part of the buffer that is not being transferred:
+ on TC -> write second half of buffer
+ on HT -> write first half of buffer
+
+The DMA transfers to the two DACs are started almost simultaneously, so it is
+assumed that the transfers are also in close sync so the write locations will
+also be synced, so the write pointer is only updated in the interrupts for one
+stream.
+*/
+
 //################################ DAC 1 ############################################################
 void DMA1_Stream7_IRQHandler(void)
 {
-
-
-  /* Transfer complete interrupt */
-  if (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_TCIF7) != RESET)
-  {
-
-	  dmaPtr++;
-
-	  /* Wait the DMA Stream to be effectively disabled */
-	   while (DMA_GetCmdStatus(DMA1_Stream7) != DISABLE)
-	   {}
-
-	   /* Clear the Interrupt flag */
-	   DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_TCIF7);
-
-	   /* Re-Configure the buffer address and size */
-	   DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) &dma_buffer_dac1[(OUTPUT_DMA_SIZE*2)*(dmaPtr&0x1)];
-	   DMA_InitStructure.DMA_BufferSize = OUTPUT_DMA_SIZE*2;
-
-	   /* Configure the DMA Stream with the new parameters */
-	   DMA_Init(DMA1_Stream7, &DMA_InitStructure);
-
-	   /* Enable the I2S DMA Stream*/
-	   DMA_Cmd(DMA1_Stream7, ENABLE);
-
-	   //now start next sample block calculation
-		 bCurrentSampleValid = 1-(dmaPtr&0x1);
+	/* Transfer complete interrupt */
+	if (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_TCIF7) != RESET)
+	{
+		DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_TCIF7);
+		bCurrentSampleValid = 1;
 	}
 
-  /* Half Transfer complete interrupt */
-  if (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_HTIF7) != RESET)
-  {
-	  //do something
+	/* Half Transfer complete interrupt */
+	if (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_HTIF7) != RESET)
+	{
+		DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_HTIF7);
+		bCurrentSampleValid = 0;
+	}
 
+#ifdef IRQ_HANDLE_FIFO_ERROR_FLAGS
+	/* FIFO Error interrupt */
+	if ((DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_TEIF7) != RESET) || \
+	    (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_FEIF7) != RESET) || \
+	    (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_DMEIF7) != RESET))
+	{
     /* Clear the Interrupt flag */
-    DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_HTIF7);
-  }
-
-
-#if 1
-  /* FIFO Error interrupt */
-  if ((DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_TEIF7) != RESET) || \
-     (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_FEIF7) != RESET) || \
-     (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_DMEIF7) != RESET))
-
-  {
-    /* Clear the Interrupt flag */
-    DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_TEIF7 | DMA_FLAG_FEIF7 | \
-    		DMA_FLAG_DMEIF7);
-  }
-#endif //error flags
+		DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_TEIF7 | DMA_FLAG_FEIF7 | \
+		              DMA_FLAG_DMEIF7);
+	}
+#endif //IRQ_HANDLE_FIFO_ERROR_FLAGS
 }
 //----------------------------------------------------------------------------------
 void codec_initDma_DAC()
@@ -118,8 +104,7 @@ void codec_initDma_DAC()
 	    DMA_InitStructure.DMA_MemoryInc 			= DMA_MemoryInc_Enable;
 	    DMA_InitStructure.DMA_PeripheralDataSize 	= DMA_PeripheralDataSize_HalfWord;
 	    DMA_InitStructure.DMA_MemoryDataSize 		= DMA_MemoryDataSize_HalfWord;
-	  //DMA_InitStructure.DMA_Mode 					= DMA_Mode_Circular; //not needed when using double buffered mode
-	    DMA_InitStructure.DMA_Mode 					= DMA_Mode_Normal;
+	    DMA_InitStructure.DMA_Mode 					= DMA_Mode_Circular;
 
 	    DMA_InitStructure.DMA_Priority 				= DMA_Priority_High;
 	    DMA_InitStructure.DMA_FIFOMode 				= DMA_FIFOMode_Disable;
@@ -131,8 +116,9 @@ void codec_initDma_DAC()
 	    // enable the dma interrupts transfer complete, half transfer complete and error
 	    DMA_ITConfig(DMA1_Stream7, DMA_IT_TC, ENABLE);
 	    DMA_ITConfig(DMA1_Stream7, DMA_IT_HT, ENABLE);
+#ifdef IRQ_HANDLE_FIFO_ERROR_FLAGS
 	    DMA_ITConfig(DMA1_Stream7, DMA_IT_TE | DMA_IT_FE | DMA_IT_DME, ENABLE);
-
+#endif
 	    /* I2S DMA IRQ Channel configuration */
 	    NVIC_InitStructure.NVIC_IRQChannel 				= DMA1_Stream7_IRQn;
 	    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = EVAL_AUDIO_IRQ_PREPRIO;
@@ -171,6 +157,9 @@ static void codec_AudioInterface_Init_DAC()
 //----------------------------------------------------------------------------------
 void codec_start_dac1(uint32_t Addr, uint32_t Size)
 {
+	DMA_Cmd(DMA1_Stream7, DISABLE);
+	DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_TCIF7 | DMA_FLAG_HTIF7 | DMA_FLAG_TEIF7 | DMA_FLAG_FEIF7 | DMA_FLAG_DMEIF7);
+
 	/* Configure the buffer address and size */
 	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)Addr;
 	DMA_InitStructure.DMA_BufferSize = (uint32_t)Size;
@@ -232,58 +221,28 @@ void codec_InitGPIO_DAC1(void)
 //-----------------------------------------------------------------------------------------------------
 void DMA1_Stream4_IRQHandler(void)
 {
+	/* Transfer complete interrupt */
+	if (DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TC) != RESET)
+	{
+		DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TC);
+	}
 
-	  /* Transfer complete interrupt */
-	  if (DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TC) != RESET)
-	  {
+	/* Half Transfer complete interrupt */
+	if (DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_HT) != RESET)
+	{
+		DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_HT);
+	}
 
-		  dmaPtr2++;
-
-		  /* Wait the DMA Stream to be effectively disabled */
-		   while (DMA_GetCmdStatus(CODEC_I2S2_DMA_STREAM) != DISABLE)
-		   {}
-
-		   /* Clear the Interrupt flag */
-		   DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TC);
-
-		   /* Re-Configure the buffer address and size */
-		   DMA_InitStructure2.DMA_Memory0BaseAddr = (uint32_t) &dma_buffer_dac2[(OUTPUT_DMA_SIZE*2)*(dmaPtr2&0x1)];
-		   DMA_InitStructure2.DMA_BufferSize = OUTPUT_DMA_SIZE*2;
-
-		   /* Configure the DMA Stream with the new parameters */
-		   DMA_Init(CODEC_I2S2_DMA_STREAM, &DMA_InitStructure2);
-
-		   /* Enable the I2S DMA Stream*/
-		   DMA_Cmd(CODEC_I2S2_DMA_STREAM, ENABLE);
-
-		}
-
-
-
-	  /* Half Transfer complete interrupt */
-	  if (DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_HT) != RESET)
-	  {
-		  //do something
-
-	    /* Clear the Interrupt flag */
-	    DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_HT);
-	  }
-
-
-	#if 1
-
-	  /* FIFO Error interrupt */
-	  if ((DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TE) != RESET) || \
-	     (DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_FE) != RESET) || \
-	     (DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_DME) != RESET))
-
-	  {
-	    /* Clear the Interrupt flag */
-	    DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TE | CODEC_I2S2_DMA_FLAG_FE | \
-	    		CODEC_I2S2_DMA_FLAG_DME);
-	  }
-	#endif //error flags
-
+#ifdef IRQ_HANDLE_FIFO_ERROR_FLAGS
+	/* FIFO Error interrupt */
+	if ((DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TE) != RESET) || \
+	    (DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_FE) != RESET) || \
+	    (DMA_GetFlagStatus(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_DME) != RESET))
+	{
+		DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TE | CODEC_I2S2_DMA_FLAG_FE | \
+		              CODEC_I2S2_DMA_FLAG_DME);
+	}
+#endif // IRQ_HANDLE_FIFO_ERROR_FLAGS
 }
 //-----------------------------------------------------------------------------------------------------
 void codec_initDma_DAC2()
@@ -306,9 +265,7 @@ void codec_initDma_DAC2()
 	    DMA_InitStructure2.DMA_MemoryInc 			= DMA_MemoryInc_Enable;
 	    DMA_InitStructure2.DMA_PeripheralDataSize 	= DMA_PeripheralDataSize_HalfWord;
 	    DMA_InitStructure2.DMA_MemoryDataSize 		= DMA_MemoryDataSize_HalfWord;
-	   // DMA_InitStructure.DMA_Mode 				= DMA_Mode_Circular; //not needed when using double buffered mode
-	    DMA_InitStructure2.DMA_Mode 				= DMA_Mode_Normal;
-
+	    DMA_InitStructure2.DMA_Mode 				= DMA_Mode_Circular;
 
 	    DMA_InitStructure2.DMA_Priority 			= DMA_Priority_High;
 	    DMA_InitStructure2.DMA_FIFOMode 			= DMA_FIFOMode_Disable;
@@ -320,8 +277,9 @@ void codec_initDma_DAC2()
 	    // enable the dma interrupts transfer complete, half transfer complete and error
 	    DMA_ITConfig(CODEC_I2S2_DMA_STREAM, DMA_IT_TC, ENABLE);
 	    DMA_ITConfig(CODEC_I2S2_DMA_STREAM, DMA_IT_HT, ENABLE);
+#ifdef IRQ_HANDLE_FIFO_ERROR_FLAGS
 	    DMA_ITConfig(CODEC_I2S2_DMA_STREAM, DMA_IT_TE | DMA_IT_FE | DMA_IT_DME, ENABLE);
-
+#endif
 	    /* I2S DMA IRQ Channel configuration */
 	    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream4_IRQn;
 	    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = EVAL_AUDIO_IRQ_PREPRIO;
@@ -372,6 +330,9 @@ void codec_InitGPIO_DAC2(void)
 //-----------------------------------------------------------------------------------------------------
 void codec_start_dac2(uint32_t Addr, uint32_t Size)
 {
+	DMA_Cmd(CODEC_I2S2_DMA_STREAM, DISABLE);
+	DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TC | CODEC_I2S2_DMA_FLAG_HT | CODEC_I2S2_DMA_FLAG_TE | CODEC_I2S2_DMA_FLAG_FE | CODEC_I2S2_DMA_FLAG_DME);
+
 	/* Configure the buffer address and size */
 	DMA_InitStructure2.DMA_Memory0BaseAddr = (uint32_t)Addr;
 	DMA_InitStructure2.DMA_BufferSize = (uint32_t)Size;
