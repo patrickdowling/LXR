@@ -38,8 +38,7 @@
 //------------------------------------------------------------------
 volatile int16_t dma_buffer_dac1[DMA_BUFFER_SIZE];
 volatile int16_t dma_buffer_dac2[DMA_BUFFER_SIZE];
-
-uint8_t bCurrentSampleValid = 0;
+volatile uint32_t dma_buffer_write_offset = DMA_BUFFER_SIZE / 2;
 
 //------------------------------------------------------------------
 int CodecInit()

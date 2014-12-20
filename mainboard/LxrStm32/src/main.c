@@ -179,9 +179,13 @@ void initAudioJackDiscoverPins()
 //---------------------------------------------------------
 inline void calcNextSampleBlock()
 {
-	// DAC1 -> st2, DAC2 -> st1
-	mixer_calcNextSampleBlock((int16_t*)&dma_buffer_dac1[bCurrentSampleValid*(OUTPUT_DMA_SIZE*2)],(int16_t*)&dma_buffer_dac2[bCurrentSampleValid*(OUTPUT_DMA_SIZE*2)]);
-	bCurrentSampleValid = SAMPLE_VALID;
+	uint32_t writeOffset = codec_getWriteOffset();
+	if ( DMA_BUFFER_BUSY != writeOffset )
+	{
+		// DAC1 -> st2, DAC2 -> st1
+		mixer_calcNextSampleBlock((int16_t*)&dma_buffer_dac1[writeOffset],(int16_t*)&dma_buffer_dac2[writeOffset]);
+		codec_nextBuffer();
+	}
 }
 //---------------------------------------------------------
 int main(void)
@@ -255,11 +259,9 @@ int main(void)
     {
 
     	usb_tick();
+
     	//generate next sample if no valid sample is present
-    	if(bCurrentSampleValid!= SAMPLE_VALID)
-    	{
-    		calcNextSampleBlock();
-    	}
+    	calcNextSampleBlock();
 
 		//process midi on midi port
 		uart_processMidi();
@@ -274,10 +276,8 @@ int main(void)
 		}
 
 		//generate next sample if no valid sample is present
-		if(bCurrentSampleValid!= SAMPLE_VALID)
-		{
-			calcNextSampleBlock();
-		}
+		calcNextSampleBlock();
+
 		//process the sequencer
 		seq_tick();
 

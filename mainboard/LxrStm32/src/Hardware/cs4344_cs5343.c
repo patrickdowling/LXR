@@ -62,7 +62,7 @@ void DMA1_Stream7_IRQHandler(void)
 {
 #ifdef DEBUG
 	/* If the buffer wasn't updated by now, this would seem to indicate an underrun... */
-	if ( SAMPLE_VALID != bCurrentSampleValid )
+	if ( DMA_BUFFER_BUSY != dma_buffer_write_offset )
 		++debug_dma_buffer_underruns;
 #endif
 
@@ -70,14 +70,14 @@ void DMA1_Stream7_IRQHandler(void)
 	if (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_TCIF7) != RESET)
 	{
 		DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_TCIF7);
-		bCurrentSampleValid = 1;
+		dma_buffer_write_offset = DMA_BUFFER_SIZE / 2;
 	}
 
 	/* Half Transfer complete interrupt */
 	if (DMA_GetFlagStatus(DMA1_Stream7, DMA_FLAG_HTIF7) != RESET)
 	{
 		DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_HTIF7);
-		bCurrentSampleValid = 0;
+		dma_buffer_write_offset = 0;
 	}
 
 #ifdef IRQ_HANDLE_FIFO_ERROR_FLAGS

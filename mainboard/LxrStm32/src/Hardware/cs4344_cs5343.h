@@ -39,10 +39,12 @@
 #include "stm32f4xx.h"
 #include "config.h"
 
-#define DMA_BUFFER_SIZE (OUTPUT_DMA_SIZE*2*2)			// *4 because we need 16 stereo samples = *2
+#define DMA_BUFFER_SIZE (OUTPUT_DMA_SIZE*2*2)			// *4 because we need stereo samples * 2 buffers
+#define DMA_BUFFER_BUSY ((uint32_t)-1)
 
 extern volatile int16_t dma_buffer_dac1[DMA_BUFFER_SIZE];
 extern volatile int16_t dma_buffer_dac2[DMA_BUFFER_SIZE];
+extern volatile uint32_t dma_buffer_write_offset;
 
 /* Mask for the bit EN of the I2S CFGR register */
 #define I2S_ENABLE_MASK                	 	0x0400
@@ -128,7 +130,33 @@ extern volatile int16_t dma_buffer_dac2[DMA_BUFFER_SIZE];
 #define CODEC_I2S2_DMA_FLAG_DME         		DMA_FLAG_DMEIF4
 
 
-
+/**
+ * Init DMA for two DACs.
+ * Both sreams will be started and written simulatneously so the sizes are
+ * expected to be equal.
+ * Size1 and Size2 aren't in bytes, but number of DMA_MemoryDataSize elements.
+ *
+ * @param Addr1 Buffer for DAC1
+ * @param Size1 Transfer length of buffer at Addr1
+ * @param Addr2 Buffer for DAC2
+ * @param Size2 Transfer length of buffer at Addr2
+ */
 void codec_initCsCodec(uint32_t Addr1, uint32_t Size1,uint32_t Addr2, uint32_t Size2);
+
+/**
+ * @return Offset where it's safe to write in output buffers, or DMA_BUFFER_BUSY if full
+ */
+static inline uint32_t codec_getWriteOffset()
+{
+	return dma_buffer_write_offset;
+}
+
+/**
+ * Mark currently writeable buffer as used .
+ */
+static inline void codec_nextBuffer()
+{
+	dma_buffer_write_offset = DMA_BUFFER_BUSY;
+}
 
 #endif /* CS4344_CS5343_H_ */
