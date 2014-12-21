@@ -93,7 +93,7 @@ void DMA1_Stream7_IRQHandler(void)
 #endif //IRQ_HANDLE_FIFO_ERROR_FLAGS
 }
 //----------------------------------------------------------------------------------
-void codec_initDma_DAC()
+void codec_initDma_DAC1()
 {
 		NVIC_InitTypeDef NVIC_InitStructure;
 
@@ -140,7 +140,7 @@ void codec_initDma_DAC()
 
 }
 //----------------------------------------------------------------------------------
-static void codec_AudioInterface_Init_DAC()
+static void codec_AudioInterface_Init_DAC1()
 {
   I2S_InitTypeDef I2S_InitStructure;
 
@@ -164,7 +164,7 @@ static void codec_AudioInterface_Init_DAC()
        or by user functions if DMA mode not enabled */
 }
 //----------------------------------------------------------------------------------
-void codec_start_dac1(uint32_t Addr, uint32_t Size)
+void codec_start_DAC1(uint32_t Addr, uint32_t Size)
 {
 	DMA_Cmd(DMA1_Stream7, DISABLE);
 	DMA_ClearFlag(DMA1_Stream7, DMA_FLAG_TCIF7 | DMA_FLAG_HTIF7 | DMA_FLAG_TEIF7 | DMA_FLAG_FEIF7 | DMA_FLAG_DMEIF7);
@@ -337,7 +337,7 @@ void codec_InitGPIO_DAC2(void)
 
 }
 //-----------------------------------------------------------------------------------------------------
-void codec_start_dac2(uint32_t Addr, uint32_t Size)
+void codec_start_DAC2(uint32_t Addr, uint32_t Size)
 {
 	DMA_Cmd(CODEC_I2S2_DMA_STREAM, DISABLE);
 	DMA_ClearFlag(CODEC_I2S2_DMA_STREAM, CODEC_I2S2_DMA_FLAG_TC | CODEC_I2S2_DMA_FLAG_HT | CODEC_I2S2_DMA_FLAG_TE | CODEC_I2S2_DMA_FLAG_FE | CODEC_I2S2_DMA_FLAG_DME);
@@ -395,21 +395,21 @@ static void codec_InitGPIO(void)
 //-----------------------------------------------------------------------------------------------------
 void codec_start(uint32_t Addr1, uint32_t Size1, uint32_t Addr2, uint32_t Size2)
 {
-	codec_start_dac1(Addr1,Size1);
-	codec_start_dac2(Addr2,Size2);
+	codec_start_DAC1(Addr1,Size1);
+	codec_start_DAC2(Addr2,Size2);
 }
 
 //-----------------------------------------------------------------------------------------------------
 static void codec_AudioInterface_Init(uint32_t AudioFreq)
 {
-	codec_AudioInterface_Init_DAC(AudioFreq);
+	codec_AudioInterface_Init_DAC1(AudioFreq);
 	codec_AudioInterface_Init_DAC2(AudioFreq);
 }
 
 //----------------------------------------------------------------------------------
 void codec_initDma()
 {
-	codec_initDma_DAC();
+	codec_initDma_DAC1();
 	codec_initDma_DAC2();
 }
 
