@@ -16,6 +16,7 @@ BINARY?=LxrStm32.bin
 
 ifeq ($(DEBUG),1)
 DEFINES += -DDEBUG
+CFLAGS += -g
 else
 DEFINES += -DNDEBUG
 endif
